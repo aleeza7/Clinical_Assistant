@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Assistant - Rare Disease Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .panel h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .patient-selector {
+            margin-bottom: 20px;
+        }
+        
+        select, input, textarea, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .visit-timeline {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .visit-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+        }
+        
+        .visit-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .visit-date {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .visit-notes {
+            color: #666;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+        
+        .analysis-section {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .alert {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #fff;
+        }
+        
+        .alert.warning {
+            background: linear-gradient(135deg, #f39c12, #d68910);
+        }
+        
+        .alert.info {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .symptom-patterns {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .symptom-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .symptom-item:last-child {
+            border-bottom: none;
+        }
+        
+        .symptom-count {
+            background: #3498db;
+            color: white;
+            border-radius: 15px;
+            padding: 4px 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .recommendations {
+            background: #f0f8ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #3498db;
+        }
+        
+        .recommendation-item {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .prompt-section {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+        }
+        
+        .prompt-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .prompt-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .prompt-input input {
+            flex: 1;
+        }
+        
+        .prompt-input button {
+            width: auto;
+            padding: 12px 25px;
+            margin: 0;
+        }
+        
+        .research-links {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .research-link {
+            display: block;
+            color: #3498db;
+            text-decoration: none;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e8ed;
+            transition: color 0.3s ease;
+        }
+        
+        .research-link:hover {
+            color: #2980b9;
+        }
+        
+        .research-link:last-child {
+            border-bottom: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Clinical Assistant</h1>
+            <p>AI-Powered Rare Disease Detection & Pattern Analysis</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2>Patient Selection & Timeline</h2>
+                
+                <div class="patient-selector">
+                    <select id="patientSelect">
+                        <option value="">Select a patient...</option>
+                        <option value="patient1">Michael Peralta (ID: 001)</option>
+                        <option value="patient2">Daniel Genus (ID: 002)</option>
+                        <option value="patient3">Sebastian Castillo (ID: 003)</option>
+                    </select>
+                </div>
+                
+                <button onclick="loadPatientData()">Load Patient Data</button>
+                
+                <div class="stats-grid" id="patientStats" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-number" id="visitCount">0</div>
+                        <div class="stat-label">Total Visits</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="symptomCount">0</div>
+                        <div class="stat-label">Unique Symptoms</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="timespan">0</div>
+                        <div class="stat-label">Months</div>
+                    </div>
+                </div>
+                
+                <div class="visit-timeline" id="visitTimeline"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>AI Analysis & Recommendations</h2>
+                
+                <div class="analysis-section" id="analysisSection">
+                    <div style="text-align: center; color: #666; padding: 40px;">
+                        Select a patient to begin analysis
+                    </div>
+                </div>
+                
+                    <div class="loading" id="loadingIndicator">
+        <div class="spinner"></div>
+        <p>Analyzing patient data...</p>
+    </div>
+    <button onclick="window.location.href='bone_marrow.html'" style="margin-top:15px;">
+                    bone marrow analysis
+                </button>
+</div>
+
+            </div>
+        </div>
+        
+        <div class="prompt-section">
+            <h2>Quick Clinical Query</h2>
+            <div class="prompt-input">
+                <input type="text" id="promptInput" placeholder="Enter symptoms or clinical scenario (e.g., 'Patient with fatigue, bruising, and pallor')">
+                <button onclick="processPrompt()">Analyze</button>
+            </div>
+            <div id="promptResponse"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock patient data
+        const patientData = {
+            patient1: {
+                name: "Sarah Johnson",
+                id: "001",
+                visits: [
+                    {
+                        date: "2024-01-15",
+                        notes: "Patient reports persistent fatigue over the past 3 weeks. No fever. Mild headaches. Sleep patterns normal. No significant weight loss."
+                    },
+                    {
+                        date: "2024-02-28",
+                        notes: "Follow-up visit. Fatigue continues. Patient now reports easy bruising on arms and legs. No recent trauma. Petechiae noted on examination."
+                    },
+                    {
+                        date: "2024-04-10",
+                        notes: "Patient returns with worsening symptoms. Severe fatigue limiting daily activities. Increased bruising. Pallor noted. Patient reports feeling short of breath with minimal exertion."
+                    },
+                    {
+                        date: "2024-05-22",
+                        notes: "Patient presents with concerning symptoms. Pancytopenia suspected based on clinical presentation. Severe fatigue, extensive bruising, pallor, and frequent infections over past month."
+                    },
+                    {
+                        date: "2024-06-15",
+                        notes: "Lab results confirm severe pancytopenia. CBC shows: WBC 2.1, Hgb 7.2, Platelets 15,000. Patient referred to hematology for bone marrow biopsy evaluation."
+                    }
+                ]
+            },
+            patient2: {
+                name: "Michael Chen",
+                id: "002",
+                visits: [
+                    {
+                        date: "2024-03-05",
+                        notes: "Routine check-up. Patient reports occasional fatigue but attributes to work stress. Vital signs normal. Physical exam unremarkable."
+                    },
+                    {
+                        date: "2024-04-20",
+                        notes: "Patient returns for persistent cough and fatigue. No fever. Chest X-ray ordered. Some mild bruising noted but patient reports recent fall."
+                    },
+                    {
+                        date: "2024-06-10",
+                        notes: "Follow-up for ongoing fatigue. Patient now reports weight loss of 10 lbs over 2 months. Night sweats present. Lymphadenopathy noted on examination."
+                    }
+                ]
+            },
+            patient3: {
+                name: "Emma Rodriguez",
+                id: "003",
+                visits: [
+                    {
+                        date: "2024-02-12",
+                        notes: "Patient presents with recurrent nosebleeds over past week. No trauma. Patient reports fatigue but mild. No significant medical history."
+                    },
+                    {
+                        date: "2024-03-25",
+                        notes: "Return visit for persistent nosebleeds. Now reports easy bruising and fatigue worsening. Petechiae observed during examination. Patient concerned about symptoms."
+                    },
+                    {
+                        date: "2024-05-08",
+                        notes: "Patient returns with alarming symptoms. Severe fatigue, extensive bruising, pale appearance. Reports frequent infections. Gum bleeding noted. Urgent lab work ordered."
+                    }
+                ]
+            }
+        };
+
+        // Symptom keywords for pattern detection
+        const symptomKeywords = {
+            'fatigue': ['fatigue', 'tired', 'exhaustion', 'weakness', 'energy'],
+            'bruising': ['bruising', 'bruises', 'contusions', 'ecchymoses'],
+            'bleeding': ['bleeding', 'nosebleeds', 'epistaxis', 'hemorrhage', 'gum bleeding'],
+            'pallor': ['pallor', 'pale', 'paleness'],
+            'petechiae': ['petechiae', 'pinpoint', 'small spots'],
+            'infections': ['infections', 'fever', 'illness', 'sick'],
+            'shortness_of_breath': ['shortness of breath', 'dyspnea', 'breathless'],
+            'weight_loss': ['weight loss', 'losing weight'],
+            'headaches': ['headaches', 'headache', 'head pain']
+        };
+
+        // Aplastic Anemia diagnostic criteria
+        const aplasticAnemiaPatterns = {
+            primary: ['fatigue', 'bruising', 'bleeding', 'pallor'],
+            secondary: ['petechiae', 'infections', 'shortness_of_breath'],
+            labs: ['pancytopenia', 'low wbc', 'low platelets', 'low hemoglobin']
+        };
+
+        // Mock research articles
+        const researchArticles = {
+            'aplastic_anemia': [
+                {
+                    title: "Aplastic Anemia: Pathophysiology and Treatment - New England Journal of Medicine 2024",
+                    url: "#"
+                },
+                {
+                    title: "Early Detection of Aplastic Anemia: Clinical Guidelines - Blood Journal 2024",
+                    url: "#"
+                },
+                {
+                    title: "Longitudinal Analysis of Aplastic Anemia Symptoms - Hematology Today 2024",
+                    url: "#"
+                }
+            ],
+            'general': [
+                {
+                    title: "Pattern Recognition in Rare Disease Diagnosis - Journal of Clinical Medicine 2024",
+                    url: "#"
+                },
+                {
+                    title: "AI-Assisted Clinical Decision Making - Nature Medicine 2024",
+                    url: "#"
+                }
+            ]
+        };
+
+        function loadPatientData() {
+            const selectedPatient = document.getElementById('patientSelect').value;
+            if (!selectedPatient) {
+                alert('Please select a patient first.');
+                return;
+            }
+
+            const patient = patientData[selectedPatient];
+            
+            // Show loading
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('analysisSection').innerHTML = '';
+            
+            // Update stats
+            updatePatientStats(patient);
+            
+            // Display visit timeline
+            displayVisitTimeline(patient.visits);
+            
+            // Perform analysis after a short delay for UX
+            setTimeout(() => {
+                performAnalysis(patient);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }, 1500);
+        }
+
+        function updatePatientStats(patient) {
+            const statsDiv = document.getElementById('patientStats');
+            statsDiv.style.display = 'grid';
+            
+            document.getElementById('visitCount').textContent = patient.visits.length;
+            
+            // Count unique symptoms
+            const allSymptoms = new Set();
+            patient.visits.forEach(visit => {
+                Object.keys(symptomKeywords).forEach(symptom => {
+                    symptomKeywords[symptom].forEach(keyword => {
+                        if (visit.notes.toLowerCase().includes(keyword)) {
+                            allSymptoms.add(symptom);
+                        }
+                    });
+                });
+            });
+            document.getElementById('symptomCount').textContent = allSymptoms.size;
+            
+            // Calculate timespan
+            const firstVisit = new Date(patient.visits[0].date);
+            const lastVisit = new Date(patient.visits[patient.visits.length - 1].date);
+            const months = Math.round((lastVisit - firstVisit) / (1000 * 60 * 60 * 24 * 30));
+            document.getElementById('timespan').textContent = months;
+        }
+
+        function displayVisitTimeline(visits) {
+            const timeline = document.getElementById('visitTimeline');
+            timeline.innerHTML = '';
+            
+            visits.forEach(visit => {
+                const visitDiv = document.createElement('div');
+                visitDiv.className = 'visit-item';
+                visitDiv.innerHTML = `
+                    <div class="visit-date">${formatDate(visit.date)}</div>
+                    <div class="visit-notes">${visit.notes}</div>
+                `;
+                timeline.appendChild(visitDiv);
+            });
+        }
+
+        function performAnalysis(patient) {
+            const analysisSection = document.getElementById('analysisSection');
+            
+            // Extract symptoms and their frequencies
+            const symptomCounts = {};
+            const symptomTimeline = {};
+            
+            patient.visits.forEach((visit, index) => {
+                Object.keys(symptomKeywords).forEach(symptom => {
+                    symptomKeywords[symptom].forEach(keyword => {
+                        if (visit.notes.toLowerCase().includes(keyword)) {
+                            symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
+                            if (!symptomTimeline[symptom]) {
+                                symptomTimeline[symptom] = [];
+                            }
+                            symptomTimeline[symptom].push(index + 1);
+                        }
+                    });
+                });
+            });
+
+            // Generate analysis
+            let html = '';
+            
+            // Check for Aplastic Anemia patterns
+            const aaRisk = assessAplasticAnemiaRisk(symptomCounts, patient.visits);
+            if (aaRisk.level === 'high') {
+                html += `<div class="alert">
+                    <strong>🚨 HIGH RISK ALERT</strong><br>
+                    ${aaRisk.message}
+                </div>`;
+            } else if (aaRisk.level === 'moderate') {
+                html += `<div class="alert warning">
+                    <strong>⚠️ MODERATE RISK</strong><br>
+                    ${aaRisk.message}
+                </div>`;
+            }
+
+            // Symptom patterns
+            html += `<div class="symptom-patterns">
+                <h3>Symptom Pattern Analysis</h3>`;
+            
+            Object.entries(symptomCounts).forEach(([symptom, count]) => {
+                const visits = symptomTimeline[symptom].join(', ');
+                html += `
+                    <div class="symptom-item">
+                        <span>${symptom.replace('_', ' ').toUpperCase()}</span>
+                        <div>
+                            <span class="symptom-count">${count}x</span>
+                            <small style="margin-left: 10px;">Visits: ${visits}</small>
+                        </div>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            // Recommendations
+            const recommendations = generateRecommendations(symptomCounts, aaRisk);
+            html += `<div class="recommendations">
+                <h3>Clinical Recommendations</h3>`;
+            
+            recommendations.forEach(rec => {
+                html += `<div class="recommendation-item">
+                    <strong>${rec.type}:</strong> ${rec.text}
+                </div>`;
+            });
+            html += `</div>`;
+
+            // Research links
+            const articles = aaRisk.level !== 'low' ? researchArticles.aplastic_anemia : researchArticles.general;
+            html += `<div class="research-links">
+                <h3>Relevant Research & Guidelines</h3>`;
+            
+            articles.forEach(article => {
+                html += `<a href="${article.url}" class="research-link" target="_blank">
+                    📄 ${article.title}
+                </a>`;
+            });
+            html += `</div>`;
+
+            analysisSection.innerHTML = html;
+        }
+
+        function assessAplasticAnemiaRisk(symptoms, visits) {
+            const primaryCount = aplasticAnemiaPatterns.primary.filter(s => symptoms[s]).length;
+            const secondaryCount = aplasticAnemiaPatterns.secondary.filter(s => symptoms[s]).length;
+            
+            // Check for progression over time
+            const hasProgression = visits.length >= 3 && 
+                (symptoms.fatigue >= 2 || symptoms.bruising >= 2);
+            
+            // Check for lab mentions
+            const hasLabConcerns = visits.some(visit => 
+                visit.notes.toLowerCase().includes('pancytopenia') ||
+                visit.notes.toLowerCase().includes('low') ||
+                visit.notes.toLowerCase().includes('cbc')
+            );
+
+            if (primaryCount >= 3 && hasProgression && hasLabConcerns) {
+                return {
+                    level: 'high',
+                    message: 'Patient presents with classic triad of aplastic anemia symptoms (fatigue, bruising, bleeding) with progression over multiple visits. Laboratory abnormalities mentioned. Immediate hematology consultation recommended.'
+                };
+            } else if (primaryCount >= 2 && hasProgression) {
+                return {
+                    level: 'moderate',
+                    message: 'Patient shows concerning pattern with multiple primary symptoms of aplastic anemia occurring across visits. Consider complete blood count with differential and hematology consultation.'
+                };
+            } else {
+                return {
+                    level: 'low',
+                    message: 'Current symptom pattern does not strongly suggest aplastic anemia, but continue monitoring.'
+                };
+            }
+        }
+
+        function generateRecommendations(symptoms, aaRisk) {
+            const recommendations = [];
+            
+            if (aaRisk.level === 'high') {
+                recommendations.push({
+                    type: 'URGENT',
+                    text: 'Order STAT CBC with differential, comprehensive metabolic panel, and reticulocyte count'
+                });
+                recommendations.push({
+                    type: 'REFERRAL',
+                    text: 'Immediate hematology consultation for suspected aplastic anemia'
+                });
+                recommendations.push({
+                    type: 'MONITORING',
+                    text: 'Monitor for signs of infection, bleeding, and further deterioration'
+                });
+            } else if (aaRisk.level === 'moderate') {
+                recommendations.push({
+                    type: 'LABS',
+                    text: 'Order CBC with differential within 48 hours'
+                });
+                recommendations.push({
+                    type: 'FOLLOW-UP',
+                    text: 'Schedule follow-up in 1-2 weeks to reassess symptoms'
+                });
+            }
+            
+            // Symptom-specific recommendations
+            if (symptoms.fatigue >= 2) {
+                recommendations.push({
+                    type: 'ASSESSMENT',
+                    text: 'Evaluate for underlying hematologic disorders given persistent fatigue'
+                });
+            }
+            
+            if (symptoms.bruising && symptoms.bleeding) {
+                recommendations.push({
+                    type: 'COAGULATION',
+                    text: 'Consider coagulation studies (PT/PTT) and platelet count'
+                });
+            }
+
+            return recommendations;
+        }
+
+        function processPrompt() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            if (!prompt) return;
+            
+            const responseDiv = document.getElementById('promptResponse');
+            responseDiv.innerHTML = '<div class="loading" style="display: block;"><div class="spinner"></div><p>Processing query...</p></div>';
+            
+            setTimeout(() => {
+                const analysis = analyzePrompt(prompt);
+                responseDiv.innerHTML = `
+                    <div class="alert info">
+                        <strong>AI Analysis:</strong><br>
+                        ${analysis.assessment}
+                    </div>
+                    <div class="recommendations">
+                        <h3>Suggested Actions:</h3>
+                        ${analysis.recommendations.map(rec => `
+                            <div class="recommendation-item">
+                                <strong>${rec.type}:</strong> ${rec.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="research-links">
+                        <h3>Relevant Resources:</h3>
+                        ${analysis.articles.map(article => `
+                            <a href="${article.url}" class="research-link" target="_blank">
+                                📄 ${article.title}
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function analyzePrompt(prompt) {
+            const lowerPrompt = prompt.toLowerCase();
+            
+            // Check for aplastic anemia indicators
+            const aaIndicators = ['fatigue', 'bruising', 'bleeding', 'pallor', 'petechiae'];
+            const foundIndicators = aaIndicators.filter(indicator => 
+                lowerPrompt.includes(indicator)
+            );
+            
+            if (foundIndicators.length >= 2) {
+                return {
+                    assessment: `Based on the clinical presentation mentioning ${foundIndicators.join(', ')}, there is concern for a potential hematologic disorder, particularly aplastic anemia. The combination of these symptoms warrants immediate evaluation with laboratory studies.`,
+                    recommendations: [
+                        {
+                            type: 'IMMEDIATE',
+                            text: 'Order complete blood count with differential'
+                        },
+                        {
+                            type: 'REFERRAL',
+                            text: 'Consider hematology consultation if pancytopenia present'
+                        },
+                        {
+                            type: 'MONITORING',
+                            text: 'Monitor for signs of infection and bleeding'
+                        }
+                    ],
+                    articles: researchArticles.aplastic_anemia
+                };
+            } else {
+                return {
+                    assessment: `The clinical presentation requires further evaluation. Consider systematic approach to diagnosis based on the presenting symptoms.`,
+                    recommendations: [
+                        {
+                            type: 'ASSESSMENT',
+                            text: 'Complete history and physical examination'
+                        },
+                        {
+                            type: 'LABS',
+                            text: 'Basic laboratory studies based on clinical suspicion'
+                        }
+                    ],
+                    articles: researchArticles.general
+                };
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Initialize with sample prompt
+        document.getElementById('promptInput').value = "Patient with fatigue, bruising, and pallor over multiple visits";
+    </script>
+</body>
+</html>
